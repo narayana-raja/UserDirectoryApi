@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using UserDirectoryApi.Data;
-using UserDirectoryApi.Repositories.Interface;
-using UserDirectoryApi.Repositories.Implementation;
-using UserDirectoryApi.Services.Implementation;
-using UserDirectoryApi.Services.Interface;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Mapster;
+using UserDirectoryApi.Application.Interfaces;
+using UserDirectoryApi.Application.Mappings;
+using UserDirectoryApi.Application.Services;
+using UserDirectoryApi.Infrastructure.Persistence;
+using UserDirectoryApi.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+UserMappingConfiguration.Register(TypeAdapterConfig.GlobalSettings);
 
 // Create DataBase folder
 var databaseFolder = Path.Combine(
@@ -17,6 +21,19 @@ Directory.CreateDirectory(databaseFolder);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(
         builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var auth0Domain = builder.Configuration["Auth0:Domain"];
+
+        options.Authority = $"https://{auth0Domain}/";
+        options.Audience = builder.Configuration["Auth0:Audience"];
+        options.RequireHttpsMetadata = builder.Configuration.GetValue(
+            "Auth0:RequireHttpsMetadata",
+            true);
+    });
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -61,6 +78,7 @@ app.UseHttpsRedirection();
 
 app.UseCors("ReactPolicy");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

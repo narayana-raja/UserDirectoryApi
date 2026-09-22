@@ -10,6 +10,12 @@
 *.userosscache
 *.sln.docstates
 
+# Local OIDC client configuration
+user-directory-ui/.env
+user-directory-ui/.env.local
+user-directory-ui/.env.*.local
+!user-directory-ui/.env.example
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
